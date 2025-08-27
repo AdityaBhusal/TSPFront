@@ -94,7 +94,7 @@ function App() {
         </div>
         <div className="right">
           <AlgorithmPicker selected={algos} onChange={setAlgos} canCompute={canCompute} onCompute={handleCompute} />
-          <ResultsPanel results={results} />
+          <ResultsPanel results={results} pins={pins} />
         </div>
       </main>
       <footer>
