@@ -36,9 +36,10 @@ export function ResultsPanel({ results, pins }: Props) {
               <ol>
                 {r.order.map((pinIndex, i) => {
                   const leg = i > 0 ? r.legs[i - 1] : undefined
+                  const displayName = pins[pinIndex]?.label ?? `Pin ${pinIndex}`
                   return (
                     <li key={`${pinIndex}-${i}`}>
-                      {i === 0 ? 'Start: ' : 'Stop '}{i}: Pin {pinIndex}
+                      {i === 0 ? 'Start: ' : 'Stop '}{i}: {displayName}
                       {typeof leg !== 'undefined' && (
                         <>
                           {' '}
