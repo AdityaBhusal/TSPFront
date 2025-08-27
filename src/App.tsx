@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { MapView } from './components/MapView'
 import { AlgorithmPicker } from './components/AlgorithmPicker'
 import { ResultsPanel } from './components/ResultsPanel'
+import { StopsEditor } from './components/StopsEditor'
 import { computeTSP } from './lib/tsp'
 import { osrmMatrix, osrmRoute } from './lib/osrm'
 
@@ -86,13 +87,19 @@ function App() {
             onAddPin={(lat, lng) =>
               setPins((prev: Pin[]) => [
                 ...prev,
-                { id: `${Date.now()}-${prev.length}`, lat, lng, label: prev.length === 0 ? 'Source' : `P${prev.length}` },
+                { id: `${Date.now()}-${prev.length}`, lat, lng, label: prev.length === 0 ? 'Source' : `Stop ${prev.length}` },
               ])
             }
             polyline={polyline}
           />
         </div>
         <div className="right">
+          <StopsEditor
+            pins={pins}
+            onRename={(index, name) =>
+              setPins((prev) => prev.map((p, i) => (i === index ? { ...p, label: name } : p)))
+            }
+          />
           <AlgorithmPicker selected={algos} onChange={setAlgos} canCompute={canCompute} onCompute={handleCompute} />
           <ResultsPanel results={results} pins={pins} />
         </div>
