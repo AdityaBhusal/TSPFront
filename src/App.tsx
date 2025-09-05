@@ -4,6 +4,7 @@ import { AlgorithmPicker } from './components/AlgorithmPicker'
 import { ResultsPanel } from './components/ResultsPanel'
 import { StopsEditor } from './components/StopsEditor'
 import { computeTSP } from './lib/tsp'
+import { solveTspBackend } from './lib/backend'
 import { osrmMatrix, osrmRoute } from './lib/osrm'
 
 export type AlgoKey = 'brute_force' | 'nearest_neighbor' | 'two_opt' | 'genetic'
@@ -36,13 +37,37 @@ function App() {
     two_opt: null,
     genetic: null,
   })
-  const canCompute = pins.length >= 4
+  const canCompute = pins.length >= 3
 
   const coords = useMemo(() => pins.map((p: Pin) => [p.lng, p.lat] as [number, number]), [pins])
 
   async function handleCompute() {
     if (!canCompute) return
-    // Use OSRM table to get road-aware duration/distance matrix
+    // Prefer backend if configured, otherwise fall back to client-side compute
+    const apiBase = (import.meta as any).env?.VITE_API_BASE
+    if (apiBase) {
+      try {
+        const resp = await solveTspBackend({ coordinates: coords, sourceIndex: 0, algorithms: algos })
+        const mapped: typeof results = {
+          brute_force: (resp.solutions as any)['brute_force'] ?? null,
+          nearest_neighbor: (resp.solutions as any)['nearest_neighbor'] ?? null,
+          two_opt: (resp.solutions as any)['two_opt'] ?? null,
+          genetic: (resp.solutions as any)['genetic'] ?? null,
+        }
+        setResults(mapped)
+        const bestLine = resp.polylines?.best?.coordinates as [number, number][] | undefined
+        if (bestLine && bestLine.length) {
+          setPolyline(bestLine.map(([lng, lat]) => [lat, lng]))
+        } else {
+          setPolyline(undefined)
+        }
+        return
+      } catch (e) {
+        // fall through to client-side calculation
+        console.warn('Backend compute failed, using client fallback', e)
+      }
+    }
+    // Client-side fallback: OSRM table + algorithms in browser
     const matrix: Matrix = await osrmMatrix(coords)
     const next: typeof results = { ...results }
     for (const algo of algos) {
@@ -63,7 +88,9 @@ function App() {
     let aborted = false
     async function run() {
       if (!best) return setPolyline(undefined)
-  const ordered = best[1].order.map((i: number) => coords[i])
+      // If a backend-provided polyline is already set, skip fetching
+      if (polyline && polyline.length) return
+      const ordered = best[1].order.map((i: number) => coords[i])
       try {
         const route = await osrmRoute(ordered)
         if (!aborted) setPolyline(route)
@@ -73,7 +100,7 @@ function App() {
     }
     run()
     return () => { aborted = true }
-  }, [best, coords])
+  }, [best, coords, polyline])
 
   return (
     <div className="app">

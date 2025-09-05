@@ -37,7 +37,7 @@ export function AlgorithmPicker({ selected, onChange, canCompute, onCompute }: P
           <button style={{ marginTop: 8 }} onClick={onCompute}>Compute Route</button>
         </>
       ) : (
-        <p className="hint">Add at least 4 pins (first is the source) to enable algorithm selection.</p>
+  <p className="hint">Add at least 3 pins (first is the source) to enable algorithm selection.</p>
       )}
     </section>
   )
