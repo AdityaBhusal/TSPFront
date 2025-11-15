@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Tuple
 from .models import SolveRequest, SolveResponse, Solution
 from .osrm import osrm_table, osrm_route
 from . import tsp
@@ -13,6 +15,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Proxy endpoints to avoid CORS issues with public OSRM server
+class OsrmTableRequest(BaseModel):
+    coordinates: List[Tuple[float, float]]  # [lng, lat]
+    profile: str = "driving"
+
+class OsrmRouteRequest(BaseModel):
+    coordinates: List[Tuple[float, float]]  # [lng, lat]
+    profile: str = "driving"
+
+@app.post("/api/osrm/table")
+async def proxy_osrm_table(req: OsrmTableRequest):
+    """Proxy endpoint for OSRM Table API to avoid CORS issues"""
+    try:
+        result = await osrm_table(req.coordinates, req.profile)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"OSRM table request failed: {str(e)}")
+
+@app.post("/api/osrm/route")
+async def proxy_osrm_route(req: OsrmRouteRequest):
+    """Proxy endpoint for OSRM Route API to avoid CORS issues"""
+    try:
+        route = await osrm_route(req.coordinates, req.profile)
+        # Return as [lat, lng] for frontend
+        return {"coordinates": route}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"OSRM route request failed: {str(e)}")
 
 @app.post("/api/tsp/solve", response_model=SolveResponse)
 async def solve(req: SolveRequest):

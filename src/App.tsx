@@ -34,6 +34,7 @@ function App() {
   const [pins, setPins] = useState<Pin[]>([])
   const [algos, setAlgos] = useState<AlgoKey[]>(['nearest_neighbor'])
   const [benchmarkMode, setBenchmarkMode] = useState(false)
+  const [enableRoadSnapping, setEnableRoadSnapping] = useState(false) // Disabled by default to save OSRM requests
   const [timeout, setTimeout] = useState(30)
   const [geneticMode, setGeneticMode] = useState<'auto' | 'pro'>('auto')
   const [geneticOptions, setGeneticOptions] = useState({
@@ -60,28 +61,33 @@ function App() {
     setWarning(null)
     const startTime = performance.now()
     
+    // Road snapping is now optional to reduce OSRM requests (saves N requests per compute)
     let snapSuccessful = false
-    try {
-      const snapped = await Promise.all(pins.map(async (p) => {
-        try {
-          const [sLat, sLng] = await osrmNearest(p.lat, p.lng)
-          return { ...p, lat: sLat, lng: sLng }
-        } catch {
-          return p
-        }
-      }))
+    if (enableRoadSnapping) {
+      try {
+        const snapped = await Promise.all(pins.map(async (p) => {
+          try {
+            const [sLat, sLng] = await osrmNearest(p.lat, p.lng)
+            return { ...p, lat: sLat, lng: sLng }
+          } catch {
+            return p
+          }
+        }))
 
-      snapSuccessful = snapped.some((s, i) => s.lat !== pins[i].lat || s.lng !== pins[i].lng)
-      
-      if (snapSuccessful) {
-        setPins(snapped)
+        snapSuccessful = snapped.some((s, i) => s.lat !== pins[i].lat || s.lng !== pins[i].lng)
+        
+        if (snapSuccessful) {
+          setPins(snapped)
+        }
+      } catch (err) {
+        console.warn('Snapping to road failed, continuing with original pins', err)
       }
-    } catch (err) {
-      console.warn('Snapping to road failed, continuing with original pins', err)
-    }
-    
-    if (!snapSuccessful) {
-      console.info('Road snapping skipped or failed - using original pin coordinates. This may be due to CORS restrictions on the public OSRM server.')
+      
+      if (!snapSuccessful) {
+        console.info('Road snapping skipped or failed - using original pin coordinates.')
+      }
+    } else {
+      console.info('Road snapping disabled - using original pin coordinates to reduce OSRM requests.')
     }
     
     // Check if brute force is selected with too many points
@@ -325,6 +331,8 @@ function App() {
             onCompute={handleCompute}
             benchmarkMode={benchmarkMode}
             onBenchmarkModeChange={setBenchmarkMode}
+            enableRoadSnapping={enableRoadSnapping}
+            onEnableRoadSnappingChange={setEnableRoadSnapping}
             timeout={timeout}
             onTimeoutChange={setTimeout}
             pinCount={pins.length}
