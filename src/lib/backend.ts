@@ -13,6 +13,7 @@ export type BackendSolution = {
   totalDistance: number
   totalDuration: number
   legs: BackendLeg[]
+  executionTime?: number // in milliseconds
 }
 
 export type BackendSolveResponse = {

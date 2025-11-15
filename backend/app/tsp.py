@@ -64,28 +64,95 @@ def two_opt(m: Matrix) -> Dict[str, Any]:
 
 def genetic(m: Matrix, generations: int = 200, pop_size: int = 64, mutation_rate: float = 0.1) -> Dict[str, Any]:
     import random
-    n = len(m['durations'])
-    def fitness(order):
-        return 1.0 / (1e-6 + total_for_order(order, m)['totalDuration'])
+    
+    durations = m["durations"]
+    n = len(durations)
+
+    # ---- Helpers ----
+
+    def cost(order: List[int]) -> float:
+        """Total duration of a route."""
+        return total_for_order(order, m)["totalDuration"]
+
+    def fitness(order: List[int]) -> float:
+        """Higher fitness = shorter duration."""
+        return 1.0 / (1e-9 + cost(order))
+
+    def next_unvisited_in_parent(parent, current, visited):
+        """SCX helper."""
+        try:
+            idx = parent.index(current)
+        except ValueError:
+            for c in parent:
+                if c not in visited:
+                    return c
+            return None
+
+        for offset in range(1, len(parent) + 1):
+            cand = parent[(idx + offset) % len(parent)]
+            if cand not in visited:
+                return cand
+        return None
+
+    def scx(p1, p2):
+        """Sequential Constructive Crossover."""
+        child = [0]
+        visited = {0}
+        current = 0
+        
+        while len(child) < n:
+            c1 = next_unvisited_in_parent(p1, current, visited)
+            c2 = next_unvisited_in_parent(p2, current, visited)
+
+            if c1 is None and c2 is None:
+                # add remaining
+                for c in p1:
+                    if c not in visited:
+                        child.append(c)
+                break
+
+            if c1 is None:
+                chosen = c2
+            elif c2 is None:
+                chosen = c1
+            else:
+                d1 = durations[current][c1]
+                d2 = durations[current][c2]
+                chosen = c1 if d1 < d2 else c2
+
+            child.append(chosen)
+            visited.add(chosen)
+            current = chosen
+
+        return child
+
+    def mutate(order):
+        if random.random() < mutation_rate and len(order) > 3:
+            i, j = random.sample(range(1, len(order)), 2)
+            order[i], order[j] = order[j], order[i]
+
+    # ---- initialize population ----
     base = list(range(1, n))
     pop = [[0, *random.sample(base, len(base))] for _ in range(pop_size)]
+
+    # ---- GA loop ----
     for _ in range(generations):
-        # selection
-        pop.sort(key=lambda o: -fitness(o))
-        survivors = pop[: pop_size // 4]
-        # crossover
-        children = []
-        while len(children) + len(survivors) < pop_size:
-            a, b = random.sample(survivors, 2)
-            cut = random.randint(1, n-2)
-            middle = [x for x in b[1:] if x not in a[1:cut]]
-            child = [0, *a[1:cut], *middle]
-            children.append(child)
-        pop = survivors + children
-        # mutation
-        for o in pop:
-            if random.random() < mutation_rate and len(o) > 3:
-                i, j = random.sample(range(1, len(o)), 2)
-                o[i], o[j] = o[j], o[i]
-    best = min(pop, key=lambda o: total_for_order(o, m)['totalDuration'])
+        # Evaluate + sort (best = first)
+        pop.sort(key=lambda o: cost(o))
+        
+        # Elitism: keep best 25%
+        elite_size = max(2, pop_size // 4)
+        elites = pop[:elite_size]
+
+        new_pop = elites[:]
+        while len(new_pop) < pop_size:
+            p1, p2 = random.sample(elites, 2)
+            child = scx(p1, p2)
+            mutate(child)
+            new_pop.append(child)
+
+        pop = new_pop
+
+    best = min(pop, key=cost)
     return total_for_order(best, m)
+

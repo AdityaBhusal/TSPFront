@@ -1,4 +1,4 @@
-export type AlgoKey = 'brute_force' | 'nearest_neighbor' | 'two_opt' | 'genetic'
+export type AlgoKey = 'brute_force' | 'nearest_neighbor' | 'genetic'
 
 export type TspSolveRequest = {
   coordinates: [number, number][]

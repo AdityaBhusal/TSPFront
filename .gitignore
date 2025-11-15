@@ -2,3 +2,9 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Docker & OSRM data
+osrm-data/
+*.osrm*
+*.osm.pbf
+docker-volumes/

@@ -1,32 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html, body, #root {
   height: 100%;
   margin: 0;
 }
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+
+/* Leaflet map fixes */
+.leaflet-container {
+  @apply h-full w-full rounded-lg shadow-sm;
 }
-header, footer {
-  padding: 8px 12px;
-  background: #f6f7f9;
-  border-bottom: 1px solid #eee;
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  @apply w-2;
 }
-footer { border-top: 1px solid #eee; border-bottom: none; }
-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 8px;
-  padding: 8px;
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
 }
-.left { min-height: 70vh; }
-.right {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full hover:bg-gray-400;
 }
-.algo-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.algo-item { display: flex; gap: 6px; align-items: center; }
-.result-item { border: 1px solid #eee; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
-.hint { color: #666; font-size: 0.9em; }

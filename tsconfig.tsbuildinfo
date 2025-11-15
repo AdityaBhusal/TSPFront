@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/components/AlgorithmPicker.tsx","./src/components/MapView.tsx","./src/components/ResultsPanel.tsx","./src/components/StopsEditor.tsx","./src/lib/backend.ts","./src/lib/osrm.ts","./src/lib/tsp.ts","./src/types/api.ts"],"version":"5.9.2"}

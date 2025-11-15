@@ -1,0 +1,9 @@
+# Add docker-related files to .gitignore
+
+# Docker
+osrm-data/
+*.osrm*
+*.osm.pbf
+
+# Docker volumes
+docker-volumes/

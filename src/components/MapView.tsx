@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css'
 import L, { LeafletMouseEvent } from 'leaflet'
 import { useMemo } from 'react'
 import type { Pin } from '../App'
+import { MapPinIcon } from '@heroicons/react/24/outline'
 
 // Fix default icon paths in many bundlers
 // @ts-ignore
@@ -13,10 +14,39 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
+// Custom marker icons
+const createNumberedIcon = (number: number, isStart: boolean = false) => {
+  const color = isStart ? '#10b981' : '#4f46e5'
+  const icon = L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        width: 32px;
+        height: 32px;
+        background: ${color};
+        border: 2px solid white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        color: white;
+      ">
+        ${isStart ? 'S' : number}
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  })
+  return icon
+}
+
 type Props = {
   pins: Pin[]
   onAddPin: (lat: number, lng: number) => void
   polyline?: [number, number][]
+  selectedAlgo?: string | null
 }
 
 function ClickHandler({ onAddPin }: { onAddPin: (lat: number, lng: number) => void }) {
@@ -28,20 +58,79 @@ function ClickHandler({ onAddPin }: { onAddPin: (lat: number, lng: number) => vo
   return null
 }
 
-export function MapView({ pins, onAddPin, polyline }: Props) {
-  const center = useMemo(() => ({ lat: pins[0]?.lat ?? 28.6139, lng: pins[0]?.lng ?? 77.209 }), [pins])
+export function MapView({ pins, onAddPin, polyline, selectedAlgo }: Props) {
+  // Default to Kathmandu, Nepal
+  const KATHMANDU = { lat: 27.7172453, lng: 85.3239605 }
+  
+  const polylineColor = useMemo(() => {
+    // Green-leaning palette: primary/accent/warning
+    if (!selectedAlgo) return '#059669' // primary-600
+    if (selectedAlgo === 'best') return '#10b981' // primary-500 (lighter green)
+    const colors: Record<string, string> = {
+      brute_force: '#059669', // primary-600 (green)
+      nearest_neighbor: '#10b981', // primary-500 (green)
+      two_opt: '#4f46e5', // accent-600 (blue)
+      genetic: '#059669', // use primary green instead of purple/amber
+    }
+    return colors[selectedAlgo] || '#059669'
+  }, [selectedAlgo])
 
   return (
-    <MapContainer center={[center.lat, center.lng]} zoom={12} style={{ height: '100%', width: '100%' }}>
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
-      <ClickHandler onAddPin={onAddPin} />
-      {pins.map((p) => (
-        <Marker key={p.id} position={[p.lat, p.lng]} />
-      ))}
-      {/* Draw the roads-following polyline when available */}
-      {polyline && polyline.length > 1 && (
-        <Polyline positions={polyline} pathOptions={{ color: 'steelblue', weight: 4 }} />
+    <div className="relative h-full w-full">
+      <MapContainer center={[KATHMANDU.lat, KATHMANDU.lng]} zoom={12} style={{ height: '100%', width: '100%' }} className="rounded-lg shadow-lg">
+        <TileLayer 
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+          attribution="&copy; OpenStreetMap contributors" 
+        />
+        <ClickHandler onAddPin={onAddPin} />
+        
+        {pins.map((p, i) => (
+          <Marker 
+            key={p.id} 
+            position={[p.lat, p.lng]} 
+            icon={createNumberedIcon(i, i === 0)}
+          />
+        ))}
+        
+        {/* Draw the roads-following polyline when available */}
+        {polyline && polyline.length > 1 && (
+          <Polyline 
+            positions={polyline} 
+            pathOptions={{ 
+              color: polylineColor, 
+              weight: 5,
+              opacity: 0.8,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }} 
+          />
+        )}
+      </MapContainer>
+      
+      {/* Legend */}
+      {selectedAlgo && polyline && polyline.length > 1 && (
+        <div className="absolute top-4 right-4 bg-white rounded-md shadow p-2 border border-gray-100 z-[1000]">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-1 rounded" style={{ backgroundColor: polylineColor }} />
+            <MapPinIcon className="w-4 h-4 text-gray-600" aria-hidden />
+            <span className="text-sm font-semibold text-gray-700">
+              {selectedAlgo === 'best' ? 'Best Route' : selectedAlgo.replace('_', ' ').toUpperCase()}
+            </span>
+          </div>
+        </div>
       )}
-    </MapContainer>
+      
+      {/* Instructions overlay */}
+      {pins.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1000]">
+          <div className="bg-white rounded-md shadow p-4 max-w-sm border border-gray-100">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Add your first stop</h3>
+              <p className="text-gray-600 text-sm">Click anywhere on the map to add your first stop</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

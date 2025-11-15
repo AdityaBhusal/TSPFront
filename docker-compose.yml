@@ -1,0 +1,61 @@
+services:
+  # OSRM Routing Engine for Nepal
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    container_name: tsp-osrm
+    volumes:
+      - ./osrm-data:/data  # Local OSRM data (prepared by setup-osrm.sh)
+    ports:
+      - "5000:5000"
+    command: osrm-routed --algorithm mld /data/nepal-latest.osrm
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/route/v1/driving/85.32,27.72;85.33,27.73"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tsp-network
+
+  # Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tsp-frontend
+    ports:
+      - "8080:80"
+    environment:
+      - VITE_OSRM_BASE=http://osrm:5000
+    depends_on:
+      - osrm
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - tsp-network
+
+  # Optional: Backend API (uncomment if you have a backend)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: tsp-backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - OSRM_BASE=http://osrm:5000
+  #   depends_on:
+  #     osrm:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+  #   networks:
+  #     - tsp-network
+
+networks:
+  tsp-network:
+    driver: bridge
