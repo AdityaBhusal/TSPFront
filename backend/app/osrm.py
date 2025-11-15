@@ -37,15 +37,19 @@ async def osrm_table(coords: List[Tuple[float, float]], profile: str = "driving"
     if cached is not None:
         return cached
     
-    coords_q = ";".join([f"{lng},{lat}" for lng, lat in coords])
-    url = f"{OSRM_BASE}/table/v1/{profile}/{coords_q}?annotations=duration,distance"
-    async with httpx.AsyncClient(timeout=20) as client:
-        r = await client.get(url)
-        if r.status_code == 200:
-            data = r.json()
-            result = {"durations": data.get("durations"), "distances": data.get("distances")}
-            _set_cache(cache_key, result)
-            return result
+    try:
+        coords_q = ";".join([f"{lng},{lat}" for lng, lat in coords])
+        url = f"{OSRM_BASE}/table/v1/{profile}/{coords_q}?annotations=duration,distance"
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                data = r.json()
+                result = {"durations": data.get("durations"), "distances": data.get("distances")}
+                _set_cache(cache_key, result)
+                return result
+    except Exception as e:
+        print(f"OSRM table request failed: {e}, using haversine fallback")
+    
     # fallback
     result = haversine_matrix(coords)
     _set_cache(cache_key, result)
@@ -58,16 +62,20 @@ async def osrm_route(coords: List[Tuple[float, float]], profile: str = "driving"
     if cached is not None:
         return cached
     
-    coords_q = ";".join([f"{lng},{lat}" for lng, lat in coords])
-    url = f"{OSRM_BASE}/route/v1/{profile}/{coords_q}?overview=full&geometries=geojson"
-    async with httpx.AsyncClient(timeout=20) as client:
-        r = await client.get(url)
-        if r.status_code == 200:
-            data = r.json()
-            coords_geo = data["routes"][0]["geometry"]["coordinates"]
-            result = [(latlng[1], latlng[0]) for latlng in coords_geo]  # return as (lat, lng)
-            _set_cache(cache_key, result)
-            return result
+    try:
+        coords_q = ";".join([f"{lng},{lat}" for lng, lat in coords])
+        url = f"{OSRM_BASE}/route/v1/{profile}/{coords_q}?overview=full&geometries=geojson"
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                data = r.json()
+                coords_geo = data["routes"][0]["geometry"]["coordinates"]
+                result = [(latlng[1], latlng[0]) for latlng in coords_geo]  # return as (lat, lng)
+                _set_cache(cache_key, result)
+                return result
+    except Exception as e:
+        print(f"OSRM route request failed: {e}, using straight-line fallback")
+    
     # straight-line fallback
     result = [(lat, lng) for (lng, lat) in coords]
     return result
