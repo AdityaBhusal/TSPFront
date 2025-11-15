@@ -262,6 +262,22 @@ function App() {
     setPolyline(undefined)
   }
 
+  function handleAddLocationBySearch(lat: number, lng: number, displayName: string) {
+    const currentIndex = pins.length
+    setPins((prev: Pin[]) => [
+      ...prev,
+      {
+        id: `${Date.now()}-${currentIndex}`,
+        lat,
+        lng,
+        label: displayName || (currentIndex === 0 ? 'Start' : `Stop ${currentIndex}`)
+      },
+    ])
+    // Clear results when pins change
+    setResults({ brute_force: null, nearest_neighbor: null, genetic: null })
+    setPolyline(undefined)
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="bg-white border-b border-gray-200">
@@ -322,6 +338,7 @@ function App() {
             onRemove={handleRemovePin}
             onClear={handleClearPins}
             onAddRandomPoints={handleAddRandomPoints}
+            onAddLocationBySearch={handleAddLocationBySearch}
           />
           
           <AlgorithmPicker 

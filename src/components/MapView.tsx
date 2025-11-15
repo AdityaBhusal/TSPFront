@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L, { LeafletMouseEvent } from 'leaflet'
 import { useMemo } from 'react'
@@ -89,7 +89,18 @@ export function MapView({ pins, onAddPin, polyline, selectedAlgo }: Props) {
             key={p.id} 
             position={[p.lat, p.lng]} 
             icon={createNumberedIcon(i, i === 0)}
-          />
+          >
+            <Popup>
+              <div className="text-sm">
+                <p className="font-semibold text-gray-900 mb-1">
+                  {p.label || (i === 0 ? 'Start' : `Stop ${i}`)}
+                </p>
+                <p className="text-xs text-gray-600">
+                  {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
         ))}
         
         {/* Draw the roads-following polyline when available */}
