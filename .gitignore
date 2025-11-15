@@ -2,6 +2,23 @@ node_modules/
 dist/
 .DS_Store
 *.log
+*.err
+uvicorn.err
+
+# Environment variables
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
 
 # Docker & OSRM data
 osrm-data/

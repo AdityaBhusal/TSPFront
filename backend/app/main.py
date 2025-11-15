@@ -43,12 +43,12 @@ async def solve(req: SolveRequest):
     best = None
     for v in solns.values():
         if v is None: continue
-        if best is None or v.totalDuration < best.totalDuration:
+        if best is None or v["totalDuration"] < best["totalDuration"]:
             best = v
 
     polylines = None
     if best:
-        order = best.order
+        order = best["order"]
         ordered_coords = [req.coordinates[i] for i in order]
         line = await osrm_route(ordered_coords, req.profile)
         # return as GeoJSON-like lon/lat pairs for frontend consistency
