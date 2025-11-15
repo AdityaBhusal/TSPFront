@@ -2,7 +2,7 @@
 
 import type { Matrix } from '../App'
 
-const DEFAULT_OSRM_BASE = 'http://localhost:5000'
+const DEFAULT_OSRM_BASE = 'https://router.project-osrm.org'
 const OSRM_BASE = (import.meta as any)?.env?.VITE_OSRM_BASE || DEFAULT_OSRM_BASE
 
 function haversine([lon1, lat1]: [number, number], [lon2, lat2]: [number, number]) {
