@@ -10,6 +10,15 @@ html, body, #root {
 /* Leaflet map fixes */
 .leaflet-container {
   @apply h-full w-full rounded-lg shadow-sm;
+  z-index: 1 !important;
+}
+
+/* Ensure leaflet controls and overlays stay below modals */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-control {
+  z-index: auto !important;
 }
 
 /* Custom scrollbar */

@@ -55,7 +55,6 @@ async def solve(req: SolveRequest):
     solns: dict[str, Solution | None] = {
         "brute_force": None,
         "nearest_neighbor": None,
-        "two_opt": None,
         "genetic": None,
     }
 
@@ -64,8 +63,6 @@ async def solve(req: SolveRequest):
             solns[a] = tsp.brute_force(matrix)
         elif a == "nearest_neighbor":
             solns[a] = tsp.nearest_neighbor(matrix)
-        elif a == "two_opt":
-            solns[a] = tsp.two_opt(matrix)
         elif a == "genetic":
             solns[a] = tsp.genetic(matrix)
 

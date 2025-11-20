@@ -16,13 +16,13 @@ export function StopsEditor({ pins, onRename, onRemove, onClear, onAddRandomPoin
   const [randomCount, setRandomCount] = useState(5)
   const [showRandomDialog, setShowRandomDialog] = useState(false)
 
-  // Default bounds (can be adjusted based on the current map view)
+  // Default bounds - smaller area around central Kathmandu (approximately 10km x 10km)
   const defaultBounds = {
-    // Default to Kathmandu area (Nepal)
-    minLat: 27.6,
-    maxLat: 27.9,
-    minLng: 85.2,
-    maxLng: 85.5,
+    // Concentrated area in central Kathmandu
+    minLat: 27.68,
+    maxLat: 27.74,
+    minLng: 85.30,
+    maxLng: 85.36,
   }
 
   function handleGenerateRandom() {

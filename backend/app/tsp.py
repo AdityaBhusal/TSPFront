@@ -40,28 +40,6 @@ def nearest_neighbor(m: Matrix) -> Dict[str, Any]:
         cur = nxt
     return total_for_order(order, m)
 
-def two_opt(m: Matrix) -> Dict[str, Any]:
-    n = len(m['durations'])
-    # start with NN
-    best = nearest_neighbor(m)
-    order = best['order']
-    improved = True
-    def delta(i, k, order):
-        a, b = order[i-1], order[i]
-        c, d = order[k], order[(k+1) % len(order)] if k+1 < len(order) else None
-        if d is None:
-            return 0
-        return (m['durations'][a][c] + m['durations'][b][d]) - (m['durations'][a][b] + m['durations'][c][d])
-    while improved:
-        improved = False
-        for i in range(1, n-2):
-            for k in range(i+1, n-1):
-                if delta(i, k, order) < 0:
-                    order[i:k+1] = reversed(order[i:k+1])
-                    improved = True
-        
-    return total_for_order(order, m)
-
 def genetic(m: Matrix, generations: int = 200, pop_size: int = 64, mutation_rate: float = 0.1) -> Dict[str, Any]:
     import random
     
