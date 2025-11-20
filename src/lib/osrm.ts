@@ -4,6 +4,8 @@ const API_BASE = (import.meta as any)?.env?.VITE_API_BASE || 'http://localhost:8
 
 const osrmCache = new Map<string, any>();
 const CACHE_SIZE_LIMIT = 100;
+const DEFAULT_OSRM_BASE = 'https://router.project-osrm.org'
+const OSRM_BASE = (import.meta as any)?.env?.VITE_OSRM_BASE || DEFAULT_OSRM_BASE
 
 function getCacheKey(coords: [number, number][], type: string): string {
   const rounded = coords.map(([lng, lat]) => [
