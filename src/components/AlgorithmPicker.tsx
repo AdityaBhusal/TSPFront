@@ -9,6 +9,8 @@ type Props = {
   onCompute: () => void
   benchmarkMode: boolean
   onBenchmarkModeChange: (enabled: boolean) => void
+  enableRoadSnapping: boolean
+  onEnableRoadSnappingChange: (enabled: boolean) => void
   timeout: number
   onTimeoutChange: (seconds: number) => void
   pinCount: number
@@ -45,6 +47,8 @@ export function AlgorithmPicker({
   onCompute,
   benchmarkMode,
   onBenchmarkModeChange,
+  enableRoadSnapping,
+  onEnableRoadSnappingChange,
   timeout,
   onTimeoutChange,
   pinCount
@@ -127,6 +131,24 @@ export function AlgorithmPicker({
               <div className="flex items-center gap-1 text-sm text-gray-500">
                 <ClockIcon className="w-4 h-4 text-gray-500" aria-hidden />
                 <span>Timer</span>
+              </div>
+            </label>
+          </div>
+
+          {/* Road Snapping Toggle */}
+          <div>
+            <label className="flex items-center gap-3 p-3 rounded-md bg-white border border-gray-100 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enableRoadSnapping}
+                onChange={(e) => onEnableRoadSnappingChange(e.target.checked)}
+                className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+              />
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">Enable Road Snapping</div>
+                <div className="text-xs text-gray-600">
+                  Snap pins to nearest roads (makes {pinCount}+ extra OSRM requests)
+                </div>
               </div>
             </label>
           </div>

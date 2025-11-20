@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L, { LeafletMouseEvent } from 'leaflet'
 import { useMemo } from 'react'
@@ -15,8 +15,8 @@ L.Icon.Default.mergeOptions({
 })
 
 // Custom marker icons
-const createNumberedIcon = (number: number, isStart: boolean = false) => {
-  const color = isStart ? '#10b981' : '#4f46e5'
+const createNumberedIcon = (number: number, isStart: boolean = false, isCompleted: boolean = false) => {
+  const color = isCompleted ? '#9ca3af' : isStart ? '#10b981' : '#4f46e5'
   const icon = L.divIcon({
     className: 'custom-marker',
     html: `
@@ -32,6 +32,8 @@ const createNumberedIcon = (number: number, isStart: boolean = false) => {
         font-weight: bold;
         font-size: 14px;
         color: white;
+        opacity: ${isCompleted ? '0.5' : '1'};
+        ${isCompleted ? 'text-decoration: line-through;' : ''}
       ">
         ${isStart ? 'S' : number}
       </div>
@@ -47,6 +49,7 @@ type Props = {
   onAddPin: (lat: number, lng: number) => void
   polyline?: [number, number][]
   selectedAlgo?: string | null
+  completedStops?: Set<number>
 }
 
 function ClickHandler({ onAddPin }: { onAddPin: (lat: number, lng: number) => void }) {
@@ -58,7 +61,7 @@ function ClickHandler({ onAddPin }: { onAddPin: (lat: number, lng: number) => vo
   return null
 }
 
-export function MapView({ pins, onAddPin, polyline, selectedAlgo }: Props) {
+export function MapView({ pins, onAddPin, polyline, selectedAlgo, completedStops }: Props) {
   // Default to Kathmandu, Nepal
   const KATHMANDU = { lat: 27.7172453, lng: 85.3239605 }
   
@@ -69,7 +72,6 @@ export function MapView({ pins, onAddPin, polyline, selectedAlgo }: Props) {
     const colors: Record<string, string> = {
       brute_force: '#059669', // primary-600 (green)
       nearest_neighbor: '#10b981', // primary-500 (green)
-      two_opt: '#4f46e5', // accent-600 (blue)
       genetic: '#059669', // use primary green instead of purple/amber
     }
     return colors[selectedAlgo] || '#059669'
@@ -84,13 +86,28 @@ export function MapView({ pins, onAddPin, polyline, selectedAlgo }: Props) {
         />
         <ClickHandler onAddPin={onAddPin} />
         
-        {pins.map((p, i) => (
-          <Marker 
-            key={p.id} 
-            position={[p.lat, p.lng]} 
-            icon={createNumberedIcon(i, i === 0)}
-          />
-        ))}
+        {pins.map((p, i) => {
+          const isCompleted = completedStops?.has(i) || false
+          return (
+            <Marker 
+              key={p.id} 
+              position={[p.lat, p.lng]} 
+              icon={createNumberedIcon(i, i === 0, isCompleted)}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <p className="font-semibold text-gray-900 mb-1">
+                    {p.label || (i === 0 ? 'Start' : `Stop ${i}`)}
+                    {isCompleted && <span className="ml-2 text-xs text-success-600">✓ Completed</span>}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          )
+        })}
         
         {/* Draw the roads-following polyline when available */}
         {polyline && polyline.length > 1 && (

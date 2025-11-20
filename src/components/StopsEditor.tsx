@@ -1,6 +1,7 @@
 import type { Pin } from '../App'
 import { useState } from 'react'
 import { MapPinIcon, SparklesIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { LocationSearch } from './LocationSearch'
 
 type Props = {
   pins: Pin[]
@@ -8,19 +9,20 @@ type Props = {
   onRemove: (index: number) => void
   onClear: () => void
   onAddRandomPoints: (count: number, bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }) => void
+  onAddLocationBySearch: (lat: number, lng: number, displayName: string) => void
 }
 
-export function StopsEditor({ pins, onRename, onRemove, onClear, onAddRandomPoints }: Props) {
+export function StopsEditor({ pins, onRename, onRemove, onClear, onAddRandomPoints, onAddLocationBySearch }: Props) {
   const [randomCount, setRandomCount] = useState(5)
   const [showRandomDialog, setShowRandomDialog] = useState(false)
 
-  // Default bounds (can be adjusted based on the current map view)
+  // Default bounds - smaller area around central Kathmandu (approximately 10km x 10km)
   const defaultBounds = {
-    // Default to Kathmandu area (Nepal)
-    minLat: 27.6,
-    maxLat: 27.9,
-    minLng: 85.2,
-    maxLng: 85.5,
+    // Concentrated area in central Kathmandu
+    minLat: 27.68,
+    maxLat: 27.74,
+    minLng: 85.30,
+    maxLng: 85.36,
   }
 
   function handleGenerateRandom() {
@@ -35,6 +37,19 @@ export function StopsEditor({ pins, onRename, onRemove, onClear, onAddRandomPoin
           <MapPinIcon className="w-5 h-5 text-gray-600" aria-hidden />
           <span>Stops Manager</span>
         </h3>
+
+        {/* Location Search */}
+        <div className="mb-4">
+          <LocationSearch
+            onLocationSelect={onAddLocationBySearch}
+            placeholder="Search for a location (e.g., Kathmandu, Patan)"
+            countryCode="np"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Search and add locations by name, or click on the map
+          </p>
+        </div>
+
         <div className="text-center py-6">
           <p className="text-gray-600 font-medium">No stops added yet</p>
           <p className="text-sm text-gray-500 mt-1">Click on the map to add pins</p>
@@ -108,6 +123,18 @@ export function StopsEditor({ pins, onRename, onRemove, onClear, onAddRandomPoin
           )}
         </div>
       </div>
+
+      {/* Location Search */}
+      <div className="mb-4">
+        <LocationSearch
+          onLocationSelect={onAddLocationBySearch}
+          placeholder="Search for a location (e.g., Kathmandu, Patan)"
+          countryCode="np"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Search and add locations by name, or click on the map
+        </p>
+      </div>
       
       {/* Random Points Dialog */}
       {showRandomDialog && (
@@ -149,13 +176,18 @@ export function StopsEditor({ pins, onRename, onRemove, onClear, onAddRandomPoin
                   {i === 0 ? 'S' : i}
                 </div>
             
-            <input
-              type="text"
-              placeholder={i === 0 ? 'Starting point' : `Stop ${i} name`}
-              value={p.label ?? ''}
-              onChange={(e) => onRename(i, e.target.value)}
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
-            />
+            <div className="flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder={i === 0 ? 'Starting point' : `Stop ${i} name`}
+                value={p.label ?? ''}
+                onChange={(e) => onRename(i, e.target.value)}
+                className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all mb-1"
+              />
+              <div className="text-xs text-gray-500 px-1">
+                {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
+              </div>
+            </div>
             
             {i > 0 && (
               <button
